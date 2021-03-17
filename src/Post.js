@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useQuery, useQueryClient } from "react-query";
 import { fetchPost } from "./api";
 
 export const Post = ({
@@ -6,24 +6,17 @@ export const Post = ({
     params: { id },
   },
 }) => {
-  const [post, setPost] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
-
-  useEffect(() => {
-    async function fetchData() {
-      setIsLoading(true);
-
-      const data = await fetchPost(id);
-      setPost(data);
-
-      setIsLoading(false);
-    }
-    fetchData();
-  }, [id]);
+  const queryClient = useQueryClient();
+  const postQuery = useQuery(["posts", id], () => fetchPost(id), {
+    initialData: () => {
+      return queryClient.getQueryData("posts")?.find((post) => post.id == id); // props.match.params.id is a string and post.id is a number, hence the ==
+    },
+  });
+  const post = postQuery.data;
 
   return (
     <div>
-      {isLoading && <p>Loading...</p>}
+      {postQuery.isLoading && <p>Loading...</p>}
       {post && (
         <>
           <h2>{post.title}</h2>
